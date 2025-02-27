@@ -67,9 +67,9 @@ jobs:
   build:
     defaults:
       run:
-        working-directory: ${{inputs.working_directory}}
+        working-directory: ${{ inputs.working_directory }}
 
-    runs-on: ${{inputs.runs_on}}
+    runs-on: ${{ inputs.runs_on }}
 
     steps:
       - name: 📚 Git Checkout
@@ -78,40 +78,46 @@ jobs:
       - name: 🐦 Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: ${{inputs.flutter_version}}
-          channel: ${{inputs.flutter_channel}}
+          flutter-version: ${{ inputs.flutter_version }}
+          channel: ${{ inputs.flutter_channel }}
           cache: true
           cache-key: flutter-:os:-:channel:-:version:-:arch:-:hash:-${{ hashFiles('**/pubspec.lock') }}
 
       - name: 🤫 Set SSH Key
         env:
-          ssh_key: ${{secrets.ssh_key}}
+          ssh_key: ${{ secrets.ssh_key }}
         if: env.ssh_key != null
         uses: webfactory/ssh-agent@v0.9.0
         with:
-          ssh-private-key: ${{secrets.ssh_key}}
+          ssh-private-key: ${{ secrets.ssh_key }}
 
       - name: 📦 Install Dependencies
         run: |
           flutter pub global activate very_good_cli
-          very_good packages get --recursive --ignore=${{inputs.package_get_excludes}}
+          very_good packages get --recursive --ignore=${{ inputs.package_get_excludes }}
 
       - name: ⚙️ Run Setup
-        if: "${{inputs.setup != ''}}"
-        run: ${{inputs.setup}}
+        if: "${{ inputs.setup != '' }}"
+        run: ${{ inputs.setup }}
 
       - name: ✨ Check Formatting
-        run: dart format --line-length ${{inputs.format_line_length}} --set-exit-if-changed ${{inputs.format_directories}} --exclude '**/*.mocks.dart'
+        run: |
+          files=$(find ${{ inputs.format_directories }} -type f -name '*.dart' ! -name '*.mocks.dart')
+          if [ -z "$files" ]; then
+            echo "No Dart files found for formatting."
+          else
+            echo "$files" | xargs dart format --line-length ${{ inputs.format_line_length }} --set-exit-if-changed
+          fi
 
       - name: 🕵️ Analyze
-        run: flutter analyze ${{inputs.analyze_directories}}
+        run: flutter analyze ${{ inputs.analyze_directories }}
 
       - name: 🧪 Run Tests
-        run: very_good test -j ${{inputs.concurrency}} ${{(inputs.test_recursion && '--recursive') || ''}} ${{(inputs.test_optimization && '--optimization') || '--no-optimization'}} --coverage --test-randomize-ordering-seed random
+        run: very_good test -j ${{ inputs.concurrency }} ${{ (inputs.test_recursion && '--recursive') || '' }} ${{ (inputs.test_optimization && '--optimization') || '--no-optimization' }} --coverage --test-randomize-ordering-seed random
 
       - name: 📊 Check Code Coverage
         uses: VeryGoodOpenSource/very_good_coverage@v3
         with:
-          path: ${{inputs.working_directory}}/coverage/lcov.info
-          exclude: ${{inputs.coverage_excludes}}
-          min_coverage: ${{inputs.min_coverage}}
+          path: ${{ inputs.working_directory }}/coverage/lcov.info
+          exclude: ${{ inputs.coverage_excludes }}
+          min_coverage: ${{ inputs.min_coverage }}
