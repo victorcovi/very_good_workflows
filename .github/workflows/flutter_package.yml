@@ -102,7 +102,7 @@ jobs:
 
       - name: ✨ Check Formatting
         run: |
-          files=$(find ${{ inputs.format_directories }} -type f -name '*.dart' ! -name '*.mocks.dart' ! -name '*.gen.dart')
+          files=$(find ${{ inputs.format_directories }} -type f -name '*.dart' ! -name '*.mocks.dart' ! -name '*.gen.dart' ! -name 'app_localizations*')
           if [ -z "$files" ]; then
             echo "No Dart files found for formatting."
           else
